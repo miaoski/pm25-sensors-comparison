@@ -4,17 +4,20 @@
 
 // A4 pin 1   -> +5V
 // A4 pin 2   -> GND
-// A4 pin 5   -> 7688 Duo pin D0
-// G3 pin 5   -> 7688 Duo pin D11
+// A4 pin 5   -> 7688 Duo pin D11
+// G3 pin 5   -> 7688 Duo pin D9
 // SHT-31 SDA -> 7688 Duo pin D2
 // SHT-31 SCL -> 7688 Duo pin D3
 // DHT-22 DAT -> 7688 Duo pin D4
 
+#include <stdarg.h>
 #include <Wire.h>
 #include <SoftwareSerial.h>
 #include <Adafruit_SHT31.h>
 #include <DHT.h>
 #include <AM2321.h>
+
+#define SERIAL_DEBUG  true  // Comment to disable it
 
 #define DHTTYPE DHT22
 #define DHTPIN  4
@@ -32,14 +35,22 @@ SoftwareSerial a4(A4PIN, A4PIN+1);
 DHT dht(DHTPIN, DHTTYPE);
 AM2321 am2321;
 
+void p(const char *s) {
+#ifdef SERIAL_DEBUG
+  Serial.print(s);
+#endif
+}
+
 void setup() {
   Serial.begin(9600);
   Serial1.begin(57600);
+  p("A4 vs. G3 / DHT22 vs. SHT31\n");  
   g3.begin(9600);
   a4.begin(9600);
   dht.begin();
   if (!sht31.begin(0x44)) {
-    Serial.println("Couldn't find SHT31");
+    p("Couldn't find SHT31\n");
+    while(1) delay(1000);
   }
   delay(500);
 }
@@ -47,35 +58,59 @@ void setup() {
 void loop() {
   float t;
   float h;
-  Serial.println("A4 vs. G3 / DHT22 vs. SHT31");
-  /*
   if(readA4()) {
-    Serial.print("A4 :: ");
-    Serial.print("PM 1.0 = ");
+    Serial1.print("A4 ");
+    Serial1.print(pm10);
+    Serial1.print(" ");
+    Serial1.print(pm25);
+    Serial1.print(" ");
+    Serial1.print(pm100);
+    Serial1.print("|");
+#ifdef SERIAL_DEBUG
+    Serial.print("A4 :: PM 1.0 = ");
     Serial.print(pm10);
     Serial.print("   PM 2.5 = ");
     Serial.print(pm25);
     Serial.print("   PM 10 = ");
     Serial.println(pm100);
+#endif
+  } else {
+    return;
   }
   if(readG3()) {
-    Serial.print("G3 :: ");
-    Serial.print("PM 1.0 = ");
+    Serial1.print("G3 ");
+    Serial1.print(pm10);
+    Serial1.print(" ");
+    Serial1.print(pm25);
+    Serial1.print(" ");
+    Serial1.print(pm100);
+    Serial1.print("|");
+#ifdef SERIAL_DEBUG
+    Serial.print("G3 :: PM 1.0 = ");
     Serial.print(pm10);
     Serial.print("   PM 2.5 = ");
     Serial.print(pm25);
     Serial.print("   PM 10 = ");
     Serial.println(pm100);
+#endif
+  } else {
+    return;
   }
-  */
   t = sht31.readTemperature();
   h = sht31.readHumidity();
   delay(100);
   if(!isnan(t) && !isnan(h)) {
+    Serial1.print("SHT31 ");
+    Serial1.print(t);
+    Serial1.print(" ");
+    Serial1.print(h);
+    Serial1.print("|");
+#ifdef SERIAL_DEBUG
     Serial.print("SHT31 :: temp=");
     Serial.print(t);
     Serial.print("   hum=");
     Serial.println(h);
+#endif
   } else {
     t = -1;
     h = -1;
@@ -83,20 +118,36 @@ void loop() {
   t = dht.readTemperature();
   h = dht.readHumidity();
   if(!isnan(t) && !isnan(h)) {
+    Serial1.print("AM2302 ");
+    Serial1.print(t);
+    Serial1.print(" ");
+    Serial1.print(h);
+    Serial1.print("|");
+#ifdef SERIAL_DEBUG
     Serial.print("AM2302 :: temp=");
     Serial.print(t);
     Serial.print("   hum=");
     Serial.println(h);
+#endif
   } else {
     t = -1;
     h = -1;
   }
   delay(100);
   am2321.read();
+  t = am2321.temperature / 10.0;
+  h = am2321.humidity / 10.0;
+  Serial1.print("AM2320 ");
+  Serial1.print(t);
+  Serial1.print(" ");
+  Serial1.print(h);
+  Serial1.print("|");
+#ifdef SERIAL_DEBUG
   Serial.print("AM2320 :: temp=");
-  Serial.print(am2321.temperature / 10.0);
+  Serial.print(t);
   Serial.print("   hum=");
-  Serial.println(am2321.humidity / 10.0);
+  Serial.println(h);
+#endif
   delay(1000);
 }
 
@@ -108,6 +159,7 @@ boolean readA4() {
   pm25 = -1;
   pm100 = -1;
   memset(buf, 0, 32);
+  a4.listen();
   for(x = 0; x < 32;) {
     if(a4.available()) {
       data = a4.read();
@@ -158,11 +210,12 @@ boolean a4CheckSum(byte *p, unsigned short offset) {
 boolean readG3() {
   unsigned short x;
   byte data;
-  boolean start = false;
+  unsigned short start = 0;
   pm10 = -1;
   pm25 = -1;
   pm100 = -1;
   memset(buf, 0, 24);
+  g3.listen();
   for(x = 0; x < 24;) {
     if(g3.available()) {
       data = g3.read();

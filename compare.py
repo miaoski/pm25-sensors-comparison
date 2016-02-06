@@ -14,10 +14,9 @@ FIELDS = []
 FIELDS_LOCK = threading.Lock()
 
 
-def avg(*kw):
-    print 'kw =', kw
-    n = len(kw) * 1.0
-    s = sum(kw) * 1.0
+def avg(l):
+    n = len(l)
+    s = sum(map(float, l))
     return s/n
 
 
@@ -29,13 +28,10 @@ def timed_task():
     if len(FIELDS) == 0:
         return
     FIELDS_LOCK.acquire()
-    it = imap(avg, FIELDS)
+    it = list(imap(None, *FIELDS))
     FIELDS_LOCK.release()
-    fields = []
-    for i in it:
-        fields.append(i)
-    print 'fields =', fields
-    url = 'https://api.thingspeak.com/update?api_key=%s&field1=%s&field2=%s&field3=%s&field4=%s&field5=%s&field6=%s&field7=%s&field8=%s' % [APIKEY, ] + fields
+    fields = [avg(x) for x in it]
+    url = 'https://api.thingspeak.com/update?api_key=%s&field1=%f&field2=%f&field3=%f&field4=%f&field5=%f&field6=%f&field7=%f&field8=%f' % tuple([APIKEY, ] + fields)
     print 'url =', url
     r = requests.get(url)
     if r.status_code != requests.codes.ok:

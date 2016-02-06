@@ -33,7 +33,7 @@ DHT dht(DHTPIN, DHTTYPE);
 AM2321 am2321;
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
   Serial1.begin(57600);
   g3.begin(9600);
   a4.begin(9600);
@@ -68,8 +68,8 @@ void loop() {
     Serial.println(pm100);
   }
   */
-  sht31.readTemperature();
-  sht31.readHumidity();
+  t = sht31.readTemperature();
+  h = sht31.readHumidity();
   delay(100);
   if(!isnan(t) && !isnan(h)) {
     Serial.print("SHT31 :: temp=");
@@ -80,8 +80,8 @@ void loop() {
     t = -1;
     h = -1;
   }
-  dht.readTemperature();
-  dht.readHumidity();
+  t = dht.readTemperature();
+  h = dht.readHumidity();
   if(!isnan(t) && !isnan(h)) {
     Serial.print("AM2302 :: temp=");
     Serial.print(t);

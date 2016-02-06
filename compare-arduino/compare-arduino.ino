@@ -17,7 +17,7 @@
 #include <DHT.h>
 #include <AM2321.h>
 
-#define SERIAL_DEBUG  true  // Comment to disable it
+// #define SERIAL_DEBUG  true  // Comment to disable it
 
 #define DHTTYPE DHT22
 #define DHTPIN  4
@@ -148,7 +148,8 @@ void loop() {
   Serial.print("   hum=");
   Serial.println(h);
 #endif
-  delay(1000);
+  Serial1.println();
+  delay(2000);
 }
 
 boolean readA4() {

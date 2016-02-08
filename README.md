@@ -23,8 +23,8 @@ exit 0
 腳位
 ====
 ```
-A4 pin 1   -> +5V
-A4 pin 2   -> GND
+A4 pin 1   -> +5V             <- G3 pin 1
+A4 pin 2   -> GND             <- G3 pin 2
 A4 pin 5   -> 7688 Duo pin D10
 G3 pin 5   -> 7688 Duo pin D8
 SHT-31 SDA -> 7688 Duo pin D2 <- AM2320 SDA
